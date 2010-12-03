@@ -206,7 +206,6 @@ class Product(object):
 
     def scrape_reviews(self):
         'Scrape the reviews for product at `url` and return a list of Reviews.'
-        #TODO: test that all of them match, change "url"s in test data
         reviews = []
         urls = self._get_review_urls()
         count = len(urls)
@@ -218,7 +217,6 @@ class Product(object):
     @staticmethod
     def _scrape_permalinks(html):
         """Return all the permalinks to reviews on this page."""
-        #TODO: TEST that links match manually found
         pat = re.compile(r'<a href="(.*?)" >Permalink</a>')
         permalinks = pat.findall(html)
         return permalinks
@@ -226,8 +224,6 @@ class Product(object):
     @staticmethod
     def _get_link_to_next(html):
         'Return url of link to the next page of reviews or None if on last.'
-        #TODO: TEST that one that has next link for match, and one that doesn't
-        #           for None
         next_pat = re.compile('<a href="(((?!\|).)*)" >Next &rsaquo;</a>')
         match = next_pat.search(html)
         if match:
@@ -237,9 +233,6 @@ class Product(object):
 
     def _get_review_urls(self):
         """Returns the URLs of each review of the product."""
-        #TODO: TEST that URLs match
-        #TODO: DO a live test? or change URLs in test data to file:///...
-        #LIVE tests won't work because right answers could be outdated
         main_page_html = self._fetch_html(self.product_url)
         pat = re.compile(r'<a href="(.*?)" >'
                           'See all \d+ customer reviews...</a>')
@@ -267,7 +260,9 @@ class Product(object):
         return simplejson.dumps(reviews, indent=3)
 
 
-class ScrapingFailure(Exception): pass
+class ScrapingFailure(Exception): 
+    """Base failure for failed attempts to scrape something from a page."""
+    pass
 
 # Not used yet-- not making sure URL is right
 #class ScrapeError(Exception): pass
