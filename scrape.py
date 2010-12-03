@@ -3,8 +3,7 @@
 """
 Script to scrape Amazon product reviews.
 
-By Colin Pollock, pollockcolin@gmail.com
-
+Colin Pollock, pollockcolin@gmail.com
 
 Example Usage
 Creating a Review using the URL of an individual Amazon review.
@@ -21,6 +20,7 @@ Creating a list of Reviews using the URL of the main page of a product.
 
 """
 
+
 import re
 import sys
 import urllib2
@@ -29,27 +29,25 @@ import simplejson
 from optparse import OptionParser
 
 
-
 class Review(object):
 
     """Container for attributes and text of an Amazon product review.
 
     Attributes:
-        title -- the reviewer's title of the review
+        title        -- the reviewer's title of the review
         product_name -- full name of product according to Amazon
-        text -- the actual review of the product
-        star_rating -- 0, 1, 2, 3, 4, or 5
-        date -- date the review was left
-        reviewer -- Amazon user name of reviewer
-        helpfulness -- pair (number of people who found the review helpful,
-                             total number of people who responded)
+        text         -- the actual review of the product
+        star_rating  -- 0, 1, 2, 3, 4, or 5
+        date         -- date the review was left
+        reviewer     -- Amazon user name of reviewer
+        helpfulness  -- pair (number of people who found the review helpful,
+                        total number of people who responded)
     """
 
     def __init__(self, url):
         """Initialize fields of Amazon review by scraping site at `url`."""
         self.url = url
         self.html = self._get_html()
-        #self._get_soup()
 
         self.title = self._get_title()
         self.product_name = self._get_product_name()
@@ -65,17 +63,28 @@ class Review(object):
         return page.read()
 
 
+    #
+    # HTML scraping methods.
+    #
     def _get_date(self):
         """Return the date the review was left."""
-        pat = re.compile(r'<nobr>(.*?)</nobr>')
+        pat = re.compile(r"""<nobr>(.*?)</nobr>""")
         match = pat.search(self.html)
+        if not match:
+            raise ScrapingFailure, 'Could not find the date.'
         (date,) = match.groups()
         return date
 
     def _get_text(self):
         """Return the text of the review."""
-        pat = re.compile(r'<span class="description">\s*(.*?)\s*</span>')
+        pat = re.compile(r"""<span[ ]class="description">
+                          \s*
+                          (.*?)
+                          \s*
+                          </span>""", re.VERBOSE)
         match = pat.search(self.html)
+        if not match:
+            raise ScrapingFailure, 'Could not find the review text.'
         (text,) = match.groups()
         return text
 
@@ -83,13 +92,22 @@ class Review(object):
         """Return the reviewer's star rating of the product."""
         pat = re.compile(r'(\d).\d out of 5 stars')
         match = pat.search(self.html)
+        if not match:
+            raise ScrapingFailure, 'Could not find the star rating.'
         stars = match.groups()[0]
         return int(stars)
 
     def _get_title(self):
         """Return the review's title."""
-        pat = re.compile(r'<span class="summary">\s*(.*?)\s*</span>')
+        pat = re.compile(r"""<span[ ]class="summary">
+                          \s*
+                          (.*?)
+                          \s*
+                          </span>
+                          """, re.VERBOSE)
         match = pat.search(self.html)
+        if not match:
+            raise ScrapingFailure, 'Could not find the title.'
         return match.groups()[0]
 
     def _get_helpfulness(self):
@@ -102,6 +120,10 @@ class Review(object):
         pat = re.compile(r'(\d+) of (\d+) people found the following '
                           'review helpful')
         match = pat.search(self.html)
+        if not match:
+            #NOTE: this exception should actually be handled since some reviews
+            #      haven't been rated for helpfulness.
+            raise ScrapingFailure, 'Could not find the helpfulness rating.'
         pair = match.groups()
         helpful = int(pair[0])
         total = int(pair[1])
@@ -110,19 +132,31 @@ class Review(object):
     def _get_reviewer(self):
         """Return the reviewer's Amazon ID."""
         # beautifulsoup would be cleaner here
-        name_pat = re.compile(r'crAuthorInfo">\s*<div><a href=".*?">'
-                               '<span .*?">(.*?)</')
-        #pat = re.compile(r'<title>Amazon.com: (.*?)\'s? review of')
+        name_pat = re.compile(r"""<div[ ]class="crAuthorInfo">
+                               \s*
+                               <div>
+                               <a[ ]href=".*?">
+                               <span[ ]style[ ]=[ ]".*?">
+                               (.*?)
+                               </span>""", re.VERBOSE)
         match = name_pat.search(self.html)
+        if not match:
+            raise ScrapingFailure, 'Could not find reviewer name.'
         group = match.groups()
         return str(group[0])
 
     def _get_product_name(self):
         """Return the name of the product."""
-        pat = re.compile(r'This review is from: </span>(.*?)\(.*?\)</b>')
+        pat = re.compile(r"""This[ ]review[ ]is[ ]from:[ ]
+                          </span>
+                          (.*?)
+                          \(.*?\)
+                          </b>""", re.VERBOSE)
         match = pat.search(self.html)
-        return match.groups()[0]
-
+        if not match:
+            raise ScrapingFailure, 'Could not find product name.'
+        name = match.groups()[0]
+        return name.strip()
 
     #
     # Output methods
@@ -130,12 +164,12 @@ class Review(object):
     def __str__(self):
         """Return the field-value pairs for the review."""
         fields = self._make_fields_dict()
-        store = []
+        strings = []
         for attr, value in fields.iteritems():
-            store.extend(attr.title().rjust(20, '*') + '*' * 10 + '\n')
-            store.extend(textwrap.wrap(str(value), 40))
-            store.append('\n\n')
-        return ''.join(store)
+            strings.append(attr.title().rjust(20, '*') + '*' * 10)
+            strings.append('\n'.join(textwrap.wrap(str(value), 70)))
+            strings.append('')  # For extra newline between fields.
+        return '\n'.join(strings)
 
     def to_json(self):
         """Return a json string made from a dict of the review fields."""
@@ -147,8 +181,6 @@ class Review(object):
                     reviewer=self.reviewer, title=self.title, 
                     star_rating=self.star_rating, 
                     product_name=self.product_name)
-
-    # end output methods
 
 
 class Product(object):
@@ -174,6 +206,7 @@ class Product(object):
 
     def scrape_reviews(self):
         'Scrape the reviews for product at `url` and return a list of Reviews.'
+        #TODO: test that all of them match, change "url"s in test data
         reviews = []
         urls = self._get_review_urls()
         count = len(urls)
@@ -185,6 +218,7 @@ class Product(object):
     @staticmethod
     def _scrape_permalinks(html):
         """Return all the permalinks to reviews on this page."""
+        #TODO: TEST that links match manually found
         pat = re.compile(r'<a href="(.*?)" >Permalink</a>')
         permalinks = pat.findall(html)
         return permalinks
@@ -192,6 +226,8 @@ class Product(object):
     @staticmethod
     def _get_link_to_next(html):
         'Return url of link to the next page of reviews or None if on last.'
+        #TODO: TEST that one that has next link for match, and one that doesn't
+        #           for None
         next_pat = re.compile('<a href="(((?!\|).)*)" >Next &rsaquo;</a>')
         match = next_pat.search(html)
         if match:
@@ -201,6 +237,9 @@ class Product(object):
 
     def _get_review_urls(self):
         """Returns the URLs of each review of the product."""
+        #TODO: TEST that URLs match
+        #TODO: DO a live test? or change URLs in test data to file:///...
+        #LIVE tests won't work because right answers could be outdated
         main_page_html = self._fetch_html(self.product_url)
         pat = re.compile(r'<a href="(.*?)" >'
                           'See all \d+ customer reviews...</a>')
@@ -226,6 +265,14 @@ class Product(object):
         """Return a json string representing all the Reviews in a list."""
         reviews = [str(rev) for rev in self.reviews]
         return simplejson.dumps(reviews, indent=3)
+
+
+class ScrapingFailure(Exception): pass
+
+# Not used yet-- not making sure URL is right
+#class ScrapeError(Exception): pass
+#class NotReviewURLError(ScrapeError): pass
+#class NotProductURLError(ScrapeError): pass
 
 
 def main(argv=None):
@@ -277,6 +324,8 @@ def main(argv=None):
             print >> out, result
         elif options.the_format == 'json':
             print >> out, result.to_json()
+
+    return 0
 
 
 if __name__ == '__main__':
