@@ -4,6 +4,7 @@
 
 TODO:
   Add tests for Product with no reviews.
+  Add test for review with anonymous author.
 
   Make a mock set of .html files with Amazon links replaced with links to
   local files.

@@ -71,7 +71,7 @@ class Review(object):
         pat = re.compile(r"""<nobr>(.*?)</nobr>""")
         match = pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find the date.'
+            raise ReviewScrapingFailure('Could not find date.', self)
         (date,) = match.groups()
         return date
 
@@ -84,7 +84,7 @@ class Review(object):
                           </span>""", re.VERBOSE)
         match = pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find the review text.'
+            raise ReviewScrapingFailure('Could not find review text.', self)
         (text,) = match.groups()
         return text
 
@@ -93,7 +93,7 @@ class Review(object):
         pat = re.compile(r'(\d).\d out of 5 stars')
         match = pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find the star rating.'
+            raise ReviewScrapingFailure('Could not find star rating.', self)
         stars = match.groups()[0]
         return int(stars)
 
@@ -107,7 +107,7 @@ class Review(object):
                           """, re.VERBOSE)
         match = pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find the title.'
+            raise ReviewScrapingFailure('Could not find the title.', self)
         return match.groups()[0]
 
     def _get_helpfulness(self):
@@ -121,9 +121,11 @@ class Review(object):
                           'review helpful')
         match = pat.search(self.html)
         if not match:
-            #NOTE: this exception should actually be handled since some reviews
-            #      haven't been rated for helpfulness.
-            raise ScrapingFailure, 'Could not find the helpfulness rating.'
+            return 0, 0
+            #TODO: See if there's any indication in the HTML that there have
+            # been 0 helpfulness ratings. Raise an exception if there have 
+            # been and match is None.
+
         pair = match.groups()
         helpful = int(pair[0])
         total = int(pair[1])
@@ -131,17 +133,11 @@ class Review(object):
 
     def _get_reviewer(self):
         """Return the reviewer's Amazon ID."""
-        # beautifulsoup would be cleaner here
-        name_pat = re.compile(r"""<div[ ]class="crAuthorInfo">
-                               \s*
-                               <div>
-                               <a[ ]href=".*?">
-                               <span[ ]style[ ]=[ ]".*?">
-                               (.*?)
-                               </span>""", re.VERBOSE)
+        # beautifulsoup would be cleaner here.
+        name_pat = re.compile(r"<title>Amazon.com: (.*?)'s review of")
         match = name_pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find reviewer name.'
+            raise ReviewScrapingFailure('Could not find reviewer name.', self)
         group = match.groups()
         return str(group[0])
 
@@ -154,7 +150,7 @@ class Review(object):
                           </b>""", re.VERBOSE)
         match = pat.search(self.html)
         if not match:
-            raise ScrapingFailure, 'Could not find product name.'
+            raise ReviewScrapingFailure('Could not find product name.', self)
         name = match.groups()[0]
         return name.strip()
 
@@ -263,6 +259,16 @@ class Product(object):
 class ScrapingFailure(Exception): 
     """Base failure for failed attempts to scrape something from a page."""
     pass
+
+class ReviewScrapingFailure(ScrapingFailure):
+    def __init__(self, msg, review_obj):
+        self.msg = msg
+        self.title = review_obj.title
+        self.url = review_obj.url
+
+    def __str__(self):
+        return "%s (Review title = '%s' and url = '%s')" \
+                % (self.msg, self.title, self.url)
 
 # Not used yet-- not making sure URL is right
 #class ScrapeError(Exception): pass
