@@ -134,7 +134,7 @@ class Review(object):
     def _get_reviewer(self):
         """Return the reviewer's Amazon ID."""
         # beautifulsoup would be cleaner here.
-        name_pat = re.compile(r"<title>Amazon.com: (.*?)'s review of")
+        name_pat = re.compile(r"<title>Amazon.com: (.*?)'s? review of")
         match = name_pat.search(self.html)
         if not match:
             raise ReviewScrapingFailure('Could not find reviewer name.', self)
