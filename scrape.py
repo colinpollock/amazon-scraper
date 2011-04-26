@@ -23,9 +23,17 @@ Creating a list of Reviews using the URL of the main page of a product.
 
 import re
 import sys
-import urllib2
+
+PY3 = sys.version_info[0]
+
+if PY3:
+    from urllib.request import urlopen
+    import json as simplejson
+else:
+    from urllib2 import urlopen
+    import simplejson
+
 import textwrap
-import simplejson
 from optparse import OptionParser
 
 
@@ -59,7 +67,7 @@ class Review(object):
 
     def _get_html(self):
         """Return html found at self.url."""
-        page = urllib2.urlopen(self.url)
+        page = urlopen(self.url)
         return page.read()
 
 
@@ -198,7 +206,7 @@ class Product(object):
     @staticmethod
     def _fetch_html(url):
         """Return the HTML at `url`."""
-        return urllib2.urlopen(url).read()
+        return urlopen(url).read()
 
     def scrape_reviews(self):
         'Scrape the reviews for product at `url` and return a list of Reviews.'
