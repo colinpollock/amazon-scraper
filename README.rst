@@ -1,5 +1,16 @@
 README 
 ======
+
+
+Compatibility
+~~~~~~~~~~~~~
+I just changed all this code to work with python3x and NOT python2x. I'm not 
+sure if it's possible to get it to run under both, but it might make sense just
+to create a separate 2x fork.
+
+
+About
+~~~~~
 scrape.py can be used to scrape data from Amazon product reviews. The default
 behavior is to process the command line arguments as URLs of Amazon products. In
 this case, the script scrapes each of the reviews for the product. If the -r 
