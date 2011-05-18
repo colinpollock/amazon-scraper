@@ -24,14 +24,15 @@ Creating a list of Reviews using the URL of the main page of a product.
 import re
 import sys
 
-PY3 = sys.version_info[0]
-
-if PY3:
+if sys.version_info[0] == '3':
     from urllib.request import urlopen
-    import json as simplejson
 else:
     from urllib2 import urlopen
-    import simplejson
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 import textwrap
 from optparse import OptionParser
@@ -177,7 +178,7 @@ class Review(object):
 
     def to_json(self):
         """Return a json string made from a dict of the review fields."""
-        return simplejson.dumps(self._make_fields_dict(), indent=3)
+        return json.dumps(self._make_fields_dict(), indent=3)
 
     def _make_fields_dict(self):
         """Return a dictionary from the review's attributes to their values."""
@@ -261,7 +262,7 @@ class Product(object):
     def to_json(self):
         """Return a json string representing all the Reviews in a list."""
         reviews = [str(rev) for rev in self.reviews]
-        return simplejson.dumps(reviews, indent=3)
+        return json.dumps(reviews, indent=3)
 
 
 class ScrapingFailure(Exception): 
