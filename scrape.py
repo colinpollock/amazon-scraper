@@ -17,25 +17,21 @@ Creating a list of Reviews using the URL of the main page of a product.
 >>> product = Product(url)
 >>> for review in product.reviews:
 >>>     print review.text
-
 """
 
 
+from optparse import OptionParser
 import re
 import sys
-
+import textwrap
 if sys.version_info[0] == '3':
     from urllib.request import urlopen
 else:
     from urllib2 import urlopen
-
 try:
     import simplejson as json
 except ImportError:
     import json
-
-import textwrap
-from optparse import OptionParser
 
 
 class Review(object):
