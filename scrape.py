@@ -16,22 +16,19 @@ Creating a list of Reviews using the URL of the main page of a product.
 >>> url = 'http://www.amazon.com/Cryptonomicon-Neal-Stephenson/dp/0060512806/'
 >>> product = Product(url)
 >>> for review in product.reviews:
->>>     print review.text
+>>>     print(review.text)
 """
 
 
-from optparse import OptionParser
-import re
-import sys
-import textwrap
-if sys.version_info[0] == '3':
-    from urllib.request import urlopen
-else:
-    from urllib2 import urlopen
 try:
     import simplejson as json
 except ImportError:
     import json
+from optparse import OptionParser
+import re
+import sys
+import textwrap
+from urllib.request import urlopen
 
 
 class Review(object):
@@ -65,7 +62,7 @@ class Review(object):
     def _get_html(self):
         """Return html found at self.url."""
         page = urlopen(self.url)
-        return page.read()
+        return page.read().decode('iso-8859-1')
 
 
     #
@@ -166,7 +163,7 @@ class Review(object):
         """Return the field-value pairs for the review."""
         fields = self._make_fields_dict()
         strings = []
-        for attr, value in fields.iteritems():
+        for attr, value in fields.items():
             strings.append(attr.title().rjust(20, '*') + '*' * 10)
             strings.append('\n'.join(textwrap.wrap(str(value), 70)))
             strings.append('')  # For extra newline between fields.
@@ -203,7 +200,7 @@ class Product(object):
     @staticmethod
     def _fetch_html(url):
         """Return the HTML at `url`."""
-        return urlopen(url).read()
+        return urlopen(url).read().decode('iso-8859-1')
 
     def scrape_reviews(self):
         'Scrape the reviews for product at `url` and return a list of Reviews.'
@@ -211,7 +208,7 @@ class Product(object):
         urls = self._get_review_urls()
         count = len(urls)
         for i, url in enumerate(urls):
-            print >> sys.stderr, "Scraping review %d of %d." % (i + 1, count)
+            print("Scraping review %d of %d." % (i + 1, count), file=sys.stderr)
             reviews.append(Review(url))
         return reviews
 
@@ -243,7 +240,8 @@ class Product(object):
         permalinks = []
         i = 1
         while url:
-            print >> sys.stderr, 'Getting permalinks from review page %d.' % i
+            print('Getting permalinks from review page %d.' % i, 
+                  file=sys.stderr)
             i += 1
             html = self._fetch_html(url)
             new_permalinks = self._scrape_permalinks(html)
@@ -327,9 +325,9 @@ def main(argv=None):
     # Print out scraped information formatted as json or as default string.
     for result in results:
         if options.the_format == 'string':
-            print >> out, result
+            print(result, file=out)
         elif options.the_format == 'json':
-            print >> out, result.to_json()
+            print(result.to_json(), file=out)
 
     return 0
 
