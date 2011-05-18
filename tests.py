@@ -77,7 +77,7 @@ class TestProduct(unittest.TestCase):
         self.product = scrape.Product(the_path)
 
     def test_number(self):
-        self.assertTrue(len(self.product.reviews) == 11)
+        self.assertEqual(len(self.product.reviews), 13)
 
 
 class TestProductStatics(unittest.TestCase):
