@@ -17,3 +17,8 @@ Scraped information for each review includes:
 * Date of review
 * Helpfulness of the review, which is a pair (# voted helpful, total votes)
 
+
+TODO
+~~~~
+* Make python2x branch?
+* Add setup.py.
