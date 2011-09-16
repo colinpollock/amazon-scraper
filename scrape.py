@@ -28,7 +28,7 @@ from optparse import OptionParser
 import re
 import sys
 import textwrap
-from urllib.request import urlopen
+from urllib import urlopen
 
 
 class Review(object):
@@ -136,12 +136,12 @@ class Review(object):
     def _get_reviewer(self):
         """Return the reviewer's Amazon ID."""
         # beautifulsoup would be cleaner here.
-        name_pat = re.compile(r"<title>Amazon.com: (.*?)'s? review of")
+        name_pat = re.compile(r"<title>Amazon.com: (.*?)'s? review of", re.UNICODE)
         match = name_pat.search(self.html)
         if not match:
             raise ReviewScrapingFailure('Could not find reviewer name.', self)
         group = match.groups()
-        return str(group[0])
+        return group[0]
 
     def _get_product_name(self):
         """Return the name of the product."""
@@ -165,9 +165,9 @@ class Review(object):
         strings = []
         for attr, value in fields.items():
             strings.append(attr.title().rjust(20, '*') + '*' * 10)
-            strings.append('\n'.join(textwrap.wrap(str(value), 70)))
+            strings.append('\n'.join(textwrap.wrap(unicode(value), 70)))
             strings.append('')  # For extra newline between fields.
-        return '\n'.join(strings)
+        return '\n'.join(strings).encode('utf-8')
 
     def to_json(self):
         """Return a json string made from a dict of the review fields."""
@@ -208,7 +208,7 @@ class Product(object):
         urls = self._get_review_urls()
         count = len(urls)
         for i, url in enumerate(urls):
-            print("Scraping review %d of %d." % (i + 1, count), file=sys.stderr)
+            print >> sys.stderr, "Scraping review %d of %d." % (i + 1, count)
             reviews.append(Review(url))
         return reviews
 
@@ -240,8 +240,7 @@ class Product(object):
         permalinks = []
         i = 1
         while url:
-            print('Getting permalinks from review page %d.' % i, 
-                  file=sys.stderr)
+            print >> sys.stderr, 'Getting permalinks from review page %d.' % i 
             i += 1
             html = self._fetch_html(url)
             new_permalinks = self._scrape_permalinks(html)
@@ -325,9 +324,9 @@ def main(argv=None):
     # Print out scraped information formatted as json or as default string.
     for result in results:
         if options.the_format == 'string':
-            print(result, file=out)
+            print >> out, result
         elif options.the_format == 'json':
-            print(result.to_json(), file=out)
+            print >> out, result.to_json()
 
     return 0
 
