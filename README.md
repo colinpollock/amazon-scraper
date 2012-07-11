@@ -1,9 +1,8 @@
-README 
-======
-
+Amazon Scraper
+==============
 
 About
-~~~~~
+-----
 scrape.py can be used to scrape data from Amazon product reviews. It's extremely
 brittle since it uses regular expressions to search the HTML of product and
 review pages. If Amazon were to make small changes to how they render pages then
@@ -13,7 +12,7 @@ know about when I first wrote this.
 
 
 Usage
-~~~~~
+-----
 The default behavior is to process the command line arguments as URLs of Amazon 
 products. In this case, the script scrapes each of the reviews for the product. 
 If the -r (--review) option is used, the arguments are treated as URLs of 
@@ -32,7 +31,7 @@ Scraped information for each review includes:
 
 
 TODO
-~~~~
+----
 * Make Python3 branch.
 * Add setup.py.
 * Download Amazon pages to use as test data instead of relying on web pages.
